@@ -1,20 +1,25 @@
 {
   "manifest_version": 3,
-  "name": "ServiceDesk AI Assistant (Ollama Pro)",
-  "version": "1.1",
-  "description": "Offline AI Assistant for IT Technicians using Ollama with DOM scraping and close button",
-  "permissions": ["scripting", "storage", "activeTab"],
-  "host_permissions": ["<all_urls>"],
+  "name": "ServiceDesk AI Assistant",
+  "version": "1.1.0",
+  "description": "A browser assistant that helps IT technicians with service requests in ServiceDesk Cloud.",
+  "permissions": ["storage", "scripting", "activeTab"],
   "action": {
     "default_popup": "popup.html",
-    "default_icon": "assets/icon.png"
+    "default_icon": {
+      "16": "assets/icon.png",
+      "48": "assets/icon.png",
+      "128": "assets/icon.png"
+    }
   },
   "background": {
     "service_worker": "background.js"
   },
-  "content_scripts": [{
-    "matches": ["<all_urls>"],
-    "js": ["content.js"],
-    "css": ["sidebar.css"]
-  }]
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"]
+    }
+  ],
+  "options_page": "settings.html"
 }

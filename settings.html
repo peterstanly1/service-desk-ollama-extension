@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <title>Extension Settings</title>
+  <style>
+    body { font-family: sans-serif; padding: 1rem; }
+    label { display: block; margin-top: 1rem; }
+  </style>
+</head>
+<body>
+  <h2>Extension Settings</h2>
+  <label>
+    <input type="checkbox" id="includeNotes" />
+    Include Internal Notes in Prompts (optional)
+  </label>
+  <label>
+    Custom Instruction to AI:
+    <textarea id="customPrompt" rows="6" style="width:100%"></textarea>
+  </label>
+  <label>
+    Upload Company Policies & Procedures:
+    <input type="file" id="policyUpload" accept=".txt,.pdf,.doc,.docx" />
+  </label>
+  <button id="saveSettings">Save</button>
+  <script src="settings.js"></script>
+</body>
+</html>

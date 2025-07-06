@@ -1,1 +1,1 @@
-// background script placeholder
+// Background script placeholder
