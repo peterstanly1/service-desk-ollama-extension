@@ -25,6 +25,12 @@ function parseSRThread() {
   return entries;
 }
 
+const replyBox = document.createElement('textarea');
+replyBox.id = 'ollamaReplyBox';
+replyBox.placeholder = 'AI generated reply will appear here...';
+replyBox.style = 'position:fixed;bottom:110px;right:20px;z-index:9999;width:320px;height:120px;padding:8px;border-radius:6px;border:1px solid #ccc;resize:vertical;background:white;color:#000;font-size:14px;';
+document.body.appendChild(replyBox);
+
 const btn = document.createElement('button');
 btn.innerText = '🧵 Parse Thread';
 btn.style = 'position:fixed;bottom:20px;right:20px;z-index:9999;padding:8px 14px;background:#004aad;color:white;border:none;border-radius:6px;';
@@ -44,12 +50,10 @@ replyBtn.onclick = async () => {
     `${entry.from} [${entry.time}] (${entry.type.toUpperCase()}):\n${entry.content}\n\n`
   ).join('');
 
-  const defaultPrompt = `You are an IT service desk assistant. Based on the following SR conversation history, generate a polite, professional response that follows company policies. Only respond to the last user message if it needs action.\n\nPolicies:\n${localStorage.getItem('ollama_policies') || 'No policies loaded'}\n\nConversation History:\n${summary}`;
-
-  chrome.storage.sync.get(['ollamaModel', 'ollamaPort', 'defaultPrompt'], ({ ollamaModel, ollamaPort, defaultPrompt: storedPrompt }) => {
-    const model = ollamaModel || 'llama3';
-    const port = ollamaPort || '11434';
-    const prompt = storedPrompt || defaultPrompt;
+  chrome.runtime.sendMessage({ action: 'getOllamaSettings' }, (response) => {
+    const model = response.model;
+    const port = response.port;
+    const prompt = `${response.prompt}\n\nConversation History:\n${summary}`;
 
     chrome.runtime.sendMessage(
       {
@@ -58,23 +62,12 @@ replyBtn.onclick = async () => {
         prompt,
         port
       },
-      (response) => {
-        if (response.success) {
-          const reply = response.response.trim();
-          const textareas = document.querySelectorAll('textarea');
-          let inserted = false;
-          for (const ta of textareas) {
-            if (ta.offsetParent !== null) {
-              ta.value = reply;
-              ta.dispatchEvent(new Event('input', { bubbles: true }));
-              inserted = true;
-              break;
-            }
-          }
-
-          if (!inserted) alert("Reply box not found.");
+      (replyResponse) => {
+        if (replyResponse.success) {
+          const reply = replyResponse.response.trim();
+          replyBox.value = reply;  // show reply here
         } else {
-          console.error("Ollama fetch error:", response.error);
+          console.error("Ollama fetch error:", replyResponse.error);
           alert("Failed to get response from Ollama. Check console.");
         }
       }
