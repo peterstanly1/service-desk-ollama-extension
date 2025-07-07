@@ -24,6 +24,7 @@ function parseSRThread() {
 
   return entries;
 }
+
 const btn = document.createElement('button');
 btn.innerText = '🧵 Parse Thread';
 btn.style = 'position:fixed;bottom:20px;right:20px;z-index:9999;padding:8px 14px;background:#004aad;color:white;border:none;border-radius:6px;';
@@ -33,48 +34,51 @@ btn.onclick = () => {
   alert(`Parsed ${parsed.length} entries. See console.`);
 };
 document.body.appendChild(btn);
+
 const replyBtn = document.createElement('button');
 replyBtn.innerText = '💬 Generate Reply';
 replyBtn.style = 'position:fixed;bottom:60px;right:20px;z-index:9999;padding:8px 14px;background:#00aa4f;color:white;border:none;border-radius:6px;';
 replyBtn.onclick = async () => {
   const thread = parseSRThread();
-  const summary = thread.map(entry => 
+  const summary = thread.map(entry =>
     `${entry.from} [${entry.time}] (${entry.type.toUpperCase()}):\n${entry.content}\n\n`
   ).join('');
 
-  const prompt = `
-You are an IT service desk assistant. Based on the following SR conversation history, generate a polite, professional response that follows company policies. Only respond to the last user message if it needs action.
+  const defaultPrompt = `You are an IT service desk assistant. Based on the following SR conversation history, generate a polite, professional response that follows company policies. Only respond to the last user message if it needs action.\n\nPolicies:\n${localStorage.getItem('ollama_policies') || 'No policies loaded'}\n\nConversation History:\n${summary}`;
 
-Policies:
-${localStorage.getItem('ollama_policies') || 'No policies loaded'}
+  chrome.storage.sync.get(['ollamaModel', 'ollamaPort', 'defaultPrompt'], ({ ollamaModel, ollamaPort, defaultPrompt: storedPrompt }) => {
+    const model = ollamaModel || 'llama3';
+    const port = ollamaPort || '11434';
+    const prompt = storedPrompt || defaultPrompt;
 
-Conversation History:
-${summary}
-`;
+    chrome.runtime.sendMessage(
+      {
+        action: 'generateOllamaResponse',
+        model,
+        prompt,
+        port
+      },
+      (response) => {
+        if (response.success) {
+          const reply = response.response.trim();
+          const textareas = document.querySelectorAll('textarea');
+          let inserted = false;
+          for (const ta of textareas) {
+            if (ta.offsetParent !== null) {
+              ta.value = reply;
+              ta.dispatchEvent(new Event('input', { bubbles: true }));
+              inserted = true;
+              break;
+            }
+          }
 
-  const response = await fetch('http://localhost:11434/api/generate', {
-    method: 'POST',
-    body: JSON.stringify({
-      model: 'llama3',
-      prompt,
-      stream: false
-    })
+          if (!inserted) alert("Reply box not found.");
+        } else {
+          console.error("Ollama fetch error:", response.error);
+          alert("Failed to get response from Ollama. Check console.");
+        }
+      }
+    );
   });
-  const data = await response.json();
-  const reply = data.response.trim();
-
-  // Find reply box and insert text
-  const textareas = document.querySelectorAll('textarea');
-  let inserted = false;
-  for (const ta of textareas) {
-    if (ta.offsetParent !== null) {
-      ta.value = reply;
-      ta.dispatchEvent(new Event('input', { bubbles: true }));
-      inserted = true;
-      break;
-    }
-  }
-
-  if (!inserted) alert("Reply box not found.");
 };
 document.body.appendChild(replyBtn);
