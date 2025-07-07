@@ -1,1 +1,4 @@
-// Background script placeholder
+body: JSON.stringify({
+  model: "llama3",
+  prompt: "Your prompt here...",
+}),
