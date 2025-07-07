@@ -4,9 +4,6 @@
   "version": "1.3.0",
   "description": "A browser assistant that helps IT technicians with service requests in ServiceDesk Cloud.",
   "permissions": ["storage", "scripting", "activeTab"],
-  "host_permissions": [
-  "http://localhost:*/"
-]
 
   "action": {
     "default_popup": "popup.html",
@@ -16,6 +13,10 @@
       "128": "assets/icon.png"
     }
   },
+  "host_permissions": [
+  "http://localhost:*/"
+],
+
   "background": {
     "service_worker": "background.js"
   },
